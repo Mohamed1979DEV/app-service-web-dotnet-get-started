@@ -39,36 +39,22 @@ jobs:
       - name: Build web application
         shell: pwsh
         run: |
-          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
-          $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find "MSBuild\**\Bin\MSBuild.exe" | Select-Object -First 1
-          if (-not $msbuild) { throw "MSBuild introuvable via vswhere" }
+          Write-Host "MSBuild via PATH:"
+          Get-Command msbuild | Format-List *
 
-          $vsPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
-          $vsTools = Join-Path $vsPath "MSBuild\Microsoft\VisualStudio\v17.0"
-          if (-not (Test-Path (Join-Path $vsTools "WebApplications\Microsoft.WebApplication.targets"))) {
-            $vsTools = Join-Path $vsPath "MSBuild\Microsoft\VisualStudio\v18.0"
-          }
-
-          Write-Host "MSBuild: $msbuild"
-          Write-Host "VSToolsPath: $vsTools"
-
-          & $msbuild "aspnet-get-started\aspnet-get-started.csproj" `
-            /t:Build `
+          msbuild "aspnet-get-started\aspnet-get-started.csproj" `
+            /t:Rebuild `
             /p:Configuration=$env:CONFIGURATION `
             /p:Platform=AnyCPU `
             /p:VisualStudioVersion=17.0 `
-            /p:VSToolsPath=$vsTools `
             /m `
-            /v:m
+            /v:n
 
           if ($LASTEXITCODE -ne 0) { throw "MSBuild a echoue avec le code $LASTEXITCODE" }
 
-          $dll = "aspnet-get-started\bin\aspnet-get-started.dll"
-          if (-not (Test-Path $dll)) {
-            $dll = "aspnet-get-started\bin\Release\aspnet-get-started.dll"
-          }
-          if (-not (Test-Path $dll)) { throw "DLL introuvable apres le build" }
-          Write-Host "Build OK: $dll"
+          $dll = Get-ChildItem -Path "aspnet-get-started\bin" -Recurse -Filter "aspnet-get-started.dll" | Select-Object -First 1
+          if (-not $dll) { throw "DLL introuvable apres le build" }
+          Write-Host "Build OK: $($dll.FullName)"
 
       - name: Upload web project artifact
         uses: actions/upload-artifact@v4
