@@ -1,0 +1,160 @@
+name: CI - Build, Tests & Report
+
+on:
+  push:
+    branches: [main, Test, Cursor]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  WEB_PORT: "8080"
+  CONFIGURATION: Release
+
+jobs:
+  build-and-test:
+    name: Build web app + Playwright BDD tests
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore NuGet packages (ASP.NET Framework)
+        run: nuget restore aspnet-get-started.sln
+
+      - name: Build web application
+        run: >
+          msbuild aspnet-get-started\aspnet-get-started.csproj
+          /p:Configuration=${{ env.CONFIGURATION }}
+          /p:Platform="AnyCPU"
+          /p:DeployOnBuild=true
+          /p:DeployDefaultTarget=WebPublish
+          /p:WebPublishMethod=FileSystem
+          /p:DeleteExistingFiles=True
+          /p:PublishUrl=${{ github.workspace }}\published-site
+
+      - name: Upload published site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aspnet-get-started-site
+          path: published-site
+          retention-days: 14
+
+      - name: Start IIS Express
+        shell: pwsh
+        run: |
+          $iis = Join-Path ${env:ProgramFiles} "IIS Express\iisexpress.exe"
+          if (-not (Test-Path $iis)) { throw "IIS Express introuvable: $iis" }
+          $sitePath = Join-Path $env:GITHUB_WORKSPACE "published-site"
+          Start-Process -FilePath $iis -ArgumentList "/path:$sitePath","/port:$env:WEB_PORT" -WindowStyle Hidden
+          $deadline = (Get-Date).AddMinutes(2)
+          do {
+            Start-Sleep -Seconds 2
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:$env:WEB_PORT/Account/Login" -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200) {
+                Write-Host "Site pret sur http://localhost:$env:WEB_PORT"
+                exit 0
+              }
+            } catch {
+              Write-Host "En attente du site... $($_.Exception.Message)"
+            }
+          } while ((Get-Date) -lt $deadline)
+          throw "Le site n'a pas demarre a temps."
+
+      - name: Restore & build test project
+        run: |
+          dotnet restore TestProjectDemo\TestProjectDemo.csproj
+          dotnet build TestProjectDemo\TestProjectDemo.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Install Playwright Chromium
+        shell: pwsh
+        run: |
+          $script = Get-ChildItem -Path "TestProjectDemo\bin\${{ env.CONFIGURATION }}" -Recurse -Filter "playwright.ps1" | Select-Object -First 1
+          if (-not $script) { throw "playwright.ps1 introuvable" }
+          & $script.FullName install chromium
+
+      - name: Run Reqnroll / Playwright tests
+        shell: pwsh
+        env:
+          BASE_URL: http://localhost:${{ env.WEB_PORT }}
+        run: |
+          New-Item -ItemType Directory -Force -Path "TestProjectDemo\bin\${{ env.CONFIGURATION }}\net10.0\test-results" | Out-Null
+          dotnet test TestProjectDemo\TestProjectDemo.csproj `
+            --configuration ${{ env.CONFIGURATION }} `
+            --no-build `
+            --logger "trx;LogFileName=test-results.trx" `
+            --logger "console;verbosity=normal" `
+            --results-directory "${{ github.workspace }}\test-results"
+
+      - name: Collect Reqnroll HTML report
+        if: always()
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ github.workspace }}\test-results" | Out-Null
+          $report = Get-ChildItem -Path "TestProjectDemo\bin" -Recurse -Filter "reqnroll-report.html" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($report) {
+            Copy-Item $report.FullName "${{ github.workspace }}\test-results\index.html" -Force
+            Write-Host "Rapport copie: $($report.FullName)"
+          } else {
+            Write-Host "Aucun rapport HTML Reqnroll trouve."
+            "<html><body><h1>Rapport indisponible</h1><p>Le formatter Reqnroll n'a pas produit de fichier.</p></body></html>" |
+              Set-Content "${{ github.workspace }}\test-results\index.html"
+          }
+          $ndjson = Get-ChildItem -Path "TestProjectDemo\bin" -Recurse -Filter "cucumber-messages.ndjson" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($ndjson) {
+            Copy-Item $ndjson.FullName "${{ github.workspace }}\test-results\cucumber-messages.ndjson" -Force
+          }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+          retention-days: 30
+
+  publish-report-pages:
+    name: Publish test report to GitHub Pages
+    needs: build-and-test
+    if: always() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Test')
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: test-results
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

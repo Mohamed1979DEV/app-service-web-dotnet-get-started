@@ -5,5 +5,13 @@
   },
   "bindingCulture": {
     "name": "fr-FR"
+  },
+  "formatters": {
+    "html": {
+      "outputFilePath": "test-results/reqnroll-report.html"
+    },
+    "message": {
+      "outputFilePath": "test-results/cucumber-messages.ndjson"
+    }
   }
 }
