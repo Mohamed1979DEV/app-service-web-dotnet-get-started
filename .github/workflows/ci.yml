@@ -2,7 +2,7 @@ name: CI - Build, Tests & Report
 
 on:
   push:
-    branches: [main, Test, Cursor]
+    branches: [main, Test, Test_CI_CD, Cursor]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -166,7 +166,7 @@ jobs:
     if: |
       always() &&
       github.event_name != 'pull_request' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Test') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/Test' || github.ref == 'refs/heads/Test_CI_CD') &&
       vars.ENABLE_GITHUB_PAGES == 'true'
     runs-on: ubuntu-latest
     permissions:
