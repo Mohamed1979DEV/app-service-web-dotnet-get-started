@@ -39,22 +39,50 @@ jobs:
       - name: Build web application
         shell: pwsh
         run: |
-          Write-Host "MSBuild via PATH:"
-          Get-Command msbuild | Format-List *
+          $ErrorActionPreference = "Stop"
 
-          msbuild "aspnet-get-started\aspnet-get-started.csproj" `
-            /t:Rebuild `
-            /p:Configuration=$env:CONFIGURATION `
-            /p:Platform=AnyCPU `
-            /p:VisualStudioVersion=17.0 `
-            /m `
-            /v:n
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} "Microsoft Visual Studio\Installer\vswhere.exe"
+          $vsPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+          Write-Host "VS installationPath: $vsPath"
 
-          if ($LASTEXITCODE -ne 0) { throw "MSBuild a echoue avec le code $LASTEXITCODE" }
+          $candidates = @(
+            (Join-Path $vsPath "MSBuild\Microsoft\VisualStudio\v18.0"),
+            (Join-Path $vsPath "MSBuild\Microsoft\VisualStudio\v17.0"),
+            (Join-Path $vsPath "MSBuild\Microsoft\VisualStudio\v16.0")
+          )
+          $vsTools = $candidates | Where-Object {
+            Test-Path (Join-Path $_ "WebApplications\Microsoft.WebApplication.targets")
+          } | Select-Object -First 1
 
-          $dll = Get-ChildItem -Path "aspnet-get-started\bin" -Recurse -Filter "aspnet-get-started.dll" | Select-Object -First 1
+          Write-Host "VSToolsPath: $vsTools"
+          Write-Host "MSBuild:"
+          Get-Command msbuild | Format-List Source,Version
+
+          $msbuildArgs = @(
+            "aspnet-get-started\aspnet-get-started.csproj",
+            "/t:Rebuild",
+            "/p:Configuration=$env:CONFIGURATION",
+            "/p:Platform=AnyCPU",
+            "/m",
+            "/v:n"
+          )
+          if ($vsTools) {
+            $msbuildArgs += "/p:VSToolsPath=$vsTools"
+            $msbuildArgs += "/p:VisualStudioVersion=17.0"
+          }
+
+          & msbuild @msbuildArgs
+          if ($LASTEXITCODE -ne 0) {
+            throw "MSBuild a echoue avec le code $LASTEXITCODE"
+          }
+
+          $dll = Get-ChildItem -Path "aspnet-get-started\bin" -Recurse -Filter "aspnet-get-started.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
           if (-not $dll) { throw "DLL introuvable apres le build" }
           Write-Host "Build OK: $($dll.FullName)"
+
+          # Capture bin contents for diagnostics
+          Get-ChildItem "aspnet-get-started\bin" | Select-Object Name, Length | Format-Table
+
 
       - name: Upload web project artifact
         uses: actions/upload-artifact@v4
