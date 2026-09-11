@@ -79,6 +79,16 @@ public sealed class CommonSteps
         await Assertions.Expect(_page.GetByText(greeting)).ToBeVisibleAsync();
     }
 
+    [Then("le bouton {string} s affiche")]
+    public async Task AlorsLeBoutonSAffiche(string buttonText)
+    {
+        // Sur la home, "Learn more" est un <a class="btn">, pas un <button>
+        var control = _page.GetByRole(AriaRole.Link, new() { Name = buttonText })
+            .Or(_page.GetByRole(AriaRole.Button, new() { Name = buttonText }))
+            .Or(_page.GetByText(buttonText, new() { Exact = false }));
+        await Assertions.Expect(control.First).ToBeVisibleAsync();
+    }
+
     [Then("je suis sur la page {word}")]
     public async Task AlorsJeSuisSurLaPage(string pageName)
     {

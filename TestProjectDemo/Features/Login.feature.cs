@@ -204,6 +204,9 @@ namespace TestProjectDemo.Features
 #line 17
     await testRunner.AndAsync("je vois le lien \"Logout\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Et ");
 #line hidden
+#line 18
+    await testRunner.AndAsync("le bouton \"Learn more\" s affiche", ((string)(null)), ((global::Reqnroll.Table)(null)), "Et ");
+#line hidden
             }
             await this.ScenarioCleanupAsync();
         }
@@ -219,7 +222,7 @@ namespace TestProjectDemo.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Echec de connexion avec des identifiants invalides", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 19
+#line 20
   this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -229,16 +232,16 @@ namespace TestProjectDemo.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 20
+#line 21
     await testRunner.GivenAsync("je ouvre la page de connexion", ((string)(null)), ((global::Reqnroll.Table)(null)), "Étant donné que ");
 #line hidden
-#line 21
+#line 22
     await testRunner.WhenAsync("je me connecte avec l utilisateur \"admin\" et le mot de passe \"wrong\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Quand ");
 #line hidden
-#line 22
+#line 23
     await testRunner.ThenAsync("la page de connexion est affichee", ((string)(null)), ((global::Reqnroll.Table)(null)), "Alors ");
 #line hidden
-#line 23
+#line 24
     await testRunner.AndAsync("je vois le message d erreur \"Invalid username or password.\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Et ");
 #line hidden
             }
@@ -256,7 +259,7 @@ namespace TestProjectDemo.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Echec de connexion avec des champs vides", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 25
+#line 26
   this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -266,16 +269,16 @@ namespace TestProjectDemo.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 26
+#line 27
     await testRunner.GivenAsync("je ouvre la page de connexion", ((string)(null)), ((global::Reqnroll.Table)(null)), "Étant donné que ");
 #line hidden
-#line 27
+#line 28
     await testRunner.WhenAsync("je soumets le formulaire de connexion sans identifiants", ((string)(null)), ((global::Reqnroll.Table)(null)), "Quand ");
 #line hidden
-#line 28
+#line 29
     await testRunner.ThenAsync("la page de connexion est affichee", ((string)(null)), ((global::Reqnroll.Table)(null)), "Alors ");
 #line hidden
-#line 29
+#line 30
     await testRunner.AndAsync("je vois des erreurs de validation", ((string)(null)), ((global::Reqnroll.Table)(null)), "Et ");
 #line hidden
             }
@@ -293,7 +296,7 @@ namespace TestProjectDemo.Features
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("La deconnexion ramene a la page de connexion", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
             string[] tagsOfRule = ((string[])(null));
             global::Reqnroll.RuleInfo ruleInfo = null;
-#line 31
+#line 32
   this.ScenarioInitialize(scenarioInfo, ruleInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -303,13 +306,13 @@ namespace TestProjectDemo.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 32
+#line 33
     await testRunner.GivenAsync("je suis authentifie en tant que \"admin\" avec le mot de passe \"admin\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Étant donné que ");
 #line hidden
-#line 33
+#line 34
     await testRunner.WhenAsync("je clique sur le lien \"Logout\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Quand ");
 #line hidden
-#line 34
+#line 35
     await testRunner.ThenAsync("la page de connexion est affichee", ((string)(null)), ((global::Reqnroll.Table)(null)), "Alors ");
 #line hidden
             }

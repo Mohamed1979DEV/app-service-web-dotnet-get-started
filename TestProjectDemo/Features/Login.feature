@@ -15,6 +15,7 @@ Fonctionnalité: Connexion
     Alors je suis sur la page accueil
     Et je vois le message de bienvenue "Hello, admin"
     Et je vois le lien "Logout"
+    Et le bouton "Learn more" s affiche
 
   Scénario: Echec de connexion avec des identifiants invalides
     Étant donné que je ouvre la page de connexion
