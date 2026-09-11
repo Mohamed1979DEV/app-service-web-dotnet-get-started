@@ -2,7 +2,7 @@ name: CI - Build, Tests & Report
 
 on:
   push:
-    branches: [main, Test, Test_CI_CD, Cursor]
+    branches: [main, Test, Test_CI_CD, Demo14h, Cursor]
   pull_request:
     branches: [main]
   workflow_dispatch:
